@@ -39,10 +39,16 @@ var toRight = true;
 
 // ブロック要素の定義
 var blocks = [
-  { x: 0, y: 332, w: 200, h: 32 },
-  { x: 250, y: 232, w: 200, h: 32 },
+  { x: 0, y: 332, w: 250, h: 32 },
+  { x: 250, y: 232, w: 250, h: 32 },
   { x: 500, y: 132, w: 530, h: 32 },
 ];
+
+// 敵の情報
+var enemyX = 550;
+var enemyY = 0;
+var enemyIsJump = true;
+var enemyVy = 0;
 
 // ロード時に画面描画の処理が実行されるようにする
 window.addEventListener("load", update);
@@ -51,6 +57,48 @@ window.addEventListener("load", update);
 function update() {
   // 画面全体をクリア
   ctx.clearRect(0, 0, 640, 480);
+
+  // アップデート後の敵の座標
+  var updatedEnemyX = enemyX;
+  var updatedEnemyY = enemyY;
+
+  // 敵は左に固定の速度で移動するようにする
+  updatedEnemyX = updatedEnemyX - 1;
+
+  // 敵の場合にも、主人公の場合と同様にジャンプか否かで分岐
+  if (enemyIsJump) {
+    // ジャンプ中は敵の速度分だけ追加する
+    updatedEnemyY = enemyY + enemyVy;
+
+    // 速度を固定分だけ増加させる
+    enemyVy = enemyVy + 0.5;
+
+    // ブロックを取得する
+    const blockTargetIsOn = getBlockTargetIsOn(
+      enemyX,
+      enemyY,
+      updatedEnemyX,
+      updatedEnemyY
+    );
+
+    // ブロックが取得できた場合には、そのブロックの上に立っているよう見えるように着地させる
+    if (blockTargetIsOn !== null) {
+      updatedEnemyY = blockTargetIsOn.y - 32;
+      enemyIsJump = false;
+    }
+  } else {
+    // ブロックの上にいなければジャンプ中の扱いとして初期速度0で落下するようにする
+    if (
+      getBlockTargetIsOn(enemyX, enemyY, updatedEnemyX, updatedEnemyY) === null
+    ) {
+      enemyIsJump = true;
+      enemyVy = 0;
+    }
+  }
+
+  // 算出した結果に変更する
+  enemyX = updatedEnemyX;
+  enemyY = updatedEnemyY;
 
   // 更新後の座標
   var updatedX = x;
@@ -127,6 +175,11 @@ function update() {
 
   x = updatedX;
   y = updatedY;
+
+  // 敵の画像を表示
+  var enemyImage = new Image();
+  enemyImage.src = "../images/character-02/base.png";
+  ctx.drawImage(enemyImage, enemyX, enemyY, 32, 32);
 
   // 主人公の画像を表示
   var image = new Image();
